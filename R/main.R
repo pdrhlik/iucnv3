@@ -19,22 +19,12 @@ library(utils)
 library(RCurl)
 library(jsonlite)
 
-#'
-#'
 createUri <- function(species, infoUri, region = NULL) {
   regionUri <- ""
   if (!is.null(region)) {
     regionUri <- paste("region/", region, sep = "")
   }
   return(URLencode(paste(baseUri, infoUri, species, regionUri, "?token=", token, sep = "")))
-}
-
-threatsBySpecies <- function(species) {
-
-}
-
-habitatsBySpecies <- function(species) {
-
 }
 
 fetchResult <- function(uri) {
@@ -46,7 +36,7 @@ fetchMultiple <- function(species, infoUri, region = NULL) {
   for (i in 1:length(species)) {
     uri <- createUri(species[i], infoUri, region)
     res <- fetchResult(uri)
-    result <- append(result, list(species = species(res)))
+    result <- append(result, res)
   }
   return(result)
 }
@@ -80,7 +70,18 @@ measure <- function(data, ...) {
 
 #' IUCN Red List species threat class definition
 threat <- function(data, ...) {
-
+  result <- data$result
+  ret <- list(
+    name = data$name,
+    code = result$code,
+    title = result$title,
+    timing = result$timing,
+    scope = result$scope,
+    severity = result$severity,
+    score = result$score
+  )
+  class(ret) <- append(class(ret), "threat")
+  return(ret)
 }
 
 #' IUCN Red List individual species information class definition
@@ -110,11 +111,3 @@ species <- function(data, ...) {
   class(ret) <- append(class(ret), "species")
   return(ret)
 }
-
-
-
-
-
-
-
-
