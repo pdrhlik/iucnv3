@@ -8,106 +8,75 @@
 # iucn red list api doc
 # http://apiv3.iucnredlist.org/api/v3/docs
 
-baseUri <- "http://apiv3.iucnredlist.org/api/v3/"
-threatUri <- "threats/species/name/"
-habitatUri <- "habitats/species/name/"
-measuresUri <- "measures/species/name/"
-individualUri <- "species/"
-token <- "9bb4facb6d23f48efbf424bb05c0c1ef1cf6f468393bc745d42179ac4aca5fee"
 
-library(utils)
-library(RCurl)
-library(jsonlite)
+
+token <- "9bb4facb6d23f48efbf424bb05c0c1ef1cf6f468393bc745d42179ac4aca5fee"
+uris <- list(
+  base = "http://apiv3.iucnredlist.org/api/v3/",
+  threat = "threats/species/name/",
+  habitat = "habitats/species/name/",
+  measures = "measures/species/name/",
+  individual = "species/"
+)
+
+iucnv3.ha <- function(species, region = NULL, ncores = NULL, ...) {
+  return(fetch(species, uris$habitat, region, ncores))
+}
+
+iucnv3.th <- function(species, region = NULL, ncores = NULL) {
+  return(fetch(species, uris$threat, region, ncores))
+}
+
+fetch <- function(species, uri, region, ncores) {
+  if (is.null(ncores) || ncores < 2) {
+    return(fetchMultiple(species, uri, region))
+  } else {
+    return(fetchParallel(species, uri, region, ncores))
+  }
+}
 
 createUri <- function(species, infoUri, region = NULL) {
   regionUri <- ""
   if (!is.null(region)) {
     regionUri <- paste("region/", region, sep = "")
   }
-  return(URLencode(paste(baseUri, infoUri, species, regionUri, "?token=", token, sep = "")))
+  return(URLencode(paste(uris$base, infoUri, species, regionUri, "?token=", token, sep = "")))
 }
 
 fetchResult <- function(uri) {
-  return(fromJSON(RCurl::getURI(uri)))
+  res <- fromJSON(RCurl::getURI(uri))
+  if (length(grepl(uri, uris$habitat)) > 0) {
+    print("HABITATS")
+    return(list(habitat = habitat(res)))
+  } else if (length(grepl(uri, uris$threat)) > 0) {
+    print("THREAT")
+    return(list(threat = threat(res)))
+  } else if (length(grepl(uri, uris$measures)) > 0) {
+    print("MEASURES")
+    return(list(measure = measure(res)))
+  } else if (length(grepl(uri, uris$individual)) > 0) {
+    print("SPECIES")
+    return(list(species = species(res)))
+  }
+  print("DEFAULT")
+  return(res)
 }
 
-fetchMultiple <- function(species, infoUri, region = NULL) {
+fetchMultiple <- function(species, fetchUri, region = NULL) {
   result <- list()
   for (i in 1:length(species)) {
-    uri <- createUri(species[i], infoUri, region)
+    uri <- createUri(species[i], fetchUri, region)
     res <- fetchResult(uri)
     result <- append(result, res)
   }
   return(result)
 }
 
-#' IUCN Red List habitat class definition
-habitat <- function(data, ...) {
-  result <- data$result
-  ret <- list(
-    name = data$name,
-    code = result$code,
-    habitat = result$habitat,
-    suitability = result$suitability,
-    season = result$season,
-    majorimportance = result$majorimportance
-  )
-  class(ret) <- append(class(ret), "habitat")
-  return(ret)
+fetchParallel <- function(species, fetchUri, region = NULL, ncores) {
+
 }
 
-#' IUCN Red List conservation measure class definition
-measure <- function(data, ...) {
-  result <- data$result
-  ret <- list(
-    name = data$name,
-    code = result$code,
-    title = result$title
-  )
-  class(ret) <- append(class(ret), "measure")
-  return(ret)
-}
-
-#' IUCN Red List species threat class definition
-threat <- function(data, ...) {
-  result <- data$result
-  ret <- list(
-    name = data$name,
-    code = result$code,
-    title = result$title,
-    timing = result$timing,
-    scope = result$scope,
-    severity = result$severity,
-    score = result$score
-  )
-  class(ret) <- append(class(ret), "threat")
-  return(ret)
-}
-
-#' IUCN Red List individual species information class definition
-species <- function(data, ...) {
-  result <- data$result
-  ret <- list(
-    name = data$name,
-    taxonid = result$taxonid,
-    scientific_name = result$scientific_name,
-    kingdom = result$kingdom,
-    phylum = result$phylum,
-    class = result$class,
-    order = result$order,
-    family = result$family,
-    genus = result$genus,
-    main_common_name = result$main_common_name,
-    authority = result$authority,
-    published_year = result$published_year,
-    category = result$category,
-    criteria = result$criteria,
-    marine_system = result$marine_system,
-    freshwater_system = result$freshwater_system,
-    terrestrial_system = result$terrestrial_system,
-    assessor = result$assessor,
-    reviewer = result$reviewer
-  )
-  class(ret) <- append(class(ret), "species")
-  return(ret)
+printProgress <- function() {
+  # Ctrl+L effect
+  cat("\014")
 }

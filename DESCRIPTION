@@ -1,9 +1,15 @@
 Package: iucnv3
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
+Title: IUCN Red List API v3 data fetching
+Version: 0.0.0.9000
+Authors@R: person("Patrik", "Drhlik", email = "patrik.drhlik@gmail.com", role = c("aut", "cre"))
+Description: Package has several functions that allow
+    downloading data from IUCN Red List API v3.
+    Can run parallely if a computer supports it.
+License: Not licensed yet
 LazyData: TRUE
+Imports:
+    utils (>= 3.3.0),
+    RCurl (>= 1.95.4.8),
+    jsonlite (>= 0.9.19)
+RoxygenNote: 5.0.1
